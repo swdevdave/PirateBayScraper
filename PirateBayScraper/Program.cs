@@ -10,26 +10,85 @@ namespace PirateBayScraper
 {
     class Program
     {
+        static string showNameResponse;
+        static string seasonNumberResponse;
+        static string hiDefResponse;
+        static bool hiDef = true;
+        static string vartempurl = "DCs%20Legends.of.Tomorrow";
+        static string fullURL;
+        static string updatedName;
+        static string updatedSeasonNumber;
+        static int episodesToParse;
+
+
         static void Main(string[] args)
         {
-
+            ConsoleQuiz();
+            URLBuilder();
             GetHtmlAsync();
             Console.ReadLine();
                           
         }
 
+        private static void ConsoleQuiz()
+        {
+            Console.Write("Name of the Tv Show:\n");
+            showNameResponse = Console.ReadLine().Trim();
+            string[] splitName = showNameResponse.Split(' ');
+        
+            
+
+            for (int i = 0; i < splitName.Length; i++)
+            {
+                updatedName += splitName[i] + "%20";
+            }
+
+            //Console.WriteLine(updatedName);
+            int seasonNum;
+            Console.Write("\nWhat Season Number?\n");
+            seasonNumberResponse = Console.ReadLine();
+            seasonNum = Int32.Parse(seasonNumberResponse);
+            if (seasonNum < 10)
+            {
+                updatedSeasonNumber = seasonNumberResponse.ToString();
+                updatedSeasonNumber = "0" + updatedSeasonNumber;
+            }
+
+            //Console.Write(updatedSeasonNumber);
+
+            Console.Write("\nHD Versions? Y/N\n");
+            hiDefResponse = Console.ReadLine();
+
+            if (hiDefResponse.ToLower() != "y")
+            {
+                hiDef = false;
+            }
+            Console.WriteLine(hiDef);
+
+        }
+
+
+
+        static string URLBuilder()
+        {
+
+            string seasonEpisode = "S" + seasonNumberResponse + "E01";
+            string innerUrl = updatedName  + seasonEpisode;
+            string baseUrl = "https://thepiratebay.rocks/search/";
+            string endUrl = "/1/99/0";
+            fullURL = baseUrl + innerUrl + endUrl;
+            Console.WriteLine("\n" + fullURL);
+
+            return fullURL;
+            
+        }
+
         private static async void GetHtmlAsync()
         {
-            var vartempurl = "DCs%20Legends.of.Tomorrow";
-
-            var innerUrl = vartempurl;
-            var baseUrl = "https://thepiratebay.rocks/search/";
-            var endUrl = "/1/99/0";
-            var fullurl = baseUrl + innerUrl + endUrl;
-
+            
 
             var httpClient = new HttpClient();
-            var htmlBody = await httpClient.GetStringAsync(fullurl);
+            var htmlBody = await httpClient.GetStringAsync(fullURL);
 
             var htmlDocument = new HtmlDocument();
 
