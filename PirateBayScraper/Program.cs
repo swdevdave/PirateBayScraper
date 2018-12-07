@@ -26,23 +26,18 @@ namespace PirateBayScraper
 
         static List<string> namesOfFiles = new List<string>();
         static List<string> magenetUrl = new List<string>();
+        static List<string> noFileCount = new List<string>();
 
         static void Main(string[] args)
         {
             checkIfDirExists();
             ConsoleQuiz();
-
-            while (episodeCounter >= 1)
-            {
-                URLBuilder();
-                GetHtmlAsync();
-                System.Threading.Thread.Sleep(1000);
-            }
-                
             
-        
+            GetHtmlAsync();
+            System.Threading.Thread.Sleep(500);
+
             FinishQuiz();
-                          
+            Console.ReadLine();
         }
 
        
@@ -73,6 +68,7 @@ namespace PirateBayScraper
 
         private static void ConsoleQuiz()
         {
+
             Console.Write("Name of the Tv Show:\n");
             showNameResponse = Console.ReadLine().Trim();
             string[] splitName = showNameResponse.Split(' ');
@@ -92,8 +88,8 @@ namespace PirateBayScraper
             {
                 updatedSeasonNumber = seasonNumberResponse.ToString();
                 updatedSeasonNumber = "0" + updatedSeasonNumber;
-            }
 
+            }
             //Console.Write(updatedSeasonNumber);
 
             Console.Write("\nHD Versions? Y/N\n");
@@ -109,7 +105,7 @@ namespace PirateBayScraper
 
 
 
-        static string URLBuilder()
+        private static void URLBuilder()
         {
             if (episodeNumber < 10)
             {
@@ -119,15 +115,13 @@ namespace PirateBayScraper
                 seasonEpisode = "s" + updatedSeasonNumber + "e" + episodeNumber;
             }
 
-            
+            fullURL = String.Empty;
             string innerUrl = updatedName  + seasonEpisode;
             string baseUrl = "https://thepiratebay.rocks/search/";
             string endUrl = "/1/99/0";
             fullURL = baseUrl + innerUrl + endUrl;
             Console.WriteLine("\n" + fullURL);
-
-           
-            return fullURL;
+            
             
         }
 
@@ -144,74 +138,88 @@ namespace PirateBayScraper
 
         private static async void GetHtmlAsync()
         {
-            
-
-            var httpClient = new HttpClient();
-            var htmlBody = await httpClient.GetStringAsync(fullURL);
-            
-            var htmlDocument = new HtmlDocument();
-
-            htmlDocument.LoadHtml(htmlBody);
-            
-
-            var ScraperHtml = htmlDocument.DocumentNode.Descendants("table") // Base HTML DATA
-                 .Where(node => node.GetAttributeValue("id", "")
-                 .Equals("searchResult")).ToList();
-
-            var ScraperNames = ScraperHtml[0].Descendants("div")            // PARSED NAMES
-                .Where(node => node.GetAttributeValue("class", "")
-                .Equals("detName")).ToList();
-
-            var ScraperMagentsOuter = ScraperHtml[0].Descendants("a")            // PARSED MAGNET LINKS
-                .Where(node => node.GetAttributeValue("href", "")
-                .Contains("magnet")).ToList();
-
-            var ScraperMibSize = ScraperHtml[0].Descendants("font")            // PARSED MAGNET LINKS
-                .Where(node => node.GetAttributeValue("class", "")
-                .Equals("detDesc")).ToList();
-
-            if (ScraperHtml != null)
+            while (episodeCounter >= 1)
             {
-                foreach (var ScraperName in ScraperNames)
+
+                URLBuilder();
+                System.Threading.Thread.Sleep(200);
+                var httpClient = new HttpClient();
+                var htmlBody = await httpClient.GetStringAsync(fullURL);
+                System.Threading.Thread.Sleep(200);
+                var htmlDocument = new HtmlDocument();
+
+                htmlDocument.LoadHtml(htmlBody);
+                System.Threading.Thread.Sleep(200);
+                var ScraperHtml = htmlDocument.DocumentNode.Descendants("table") // Base HTML DATA
+                     .Where(node => node.GetAttributeValue("id", "")
+                     .Equals("searchResult")).ToList();
+                System.Threading.Thread.Sleep(200);
+                var ScraperNames = ScraperHtml[0].Descendants("div")            // PARSED NAMES
+                    .Where(node => node.GetAttributeValue("class", "")
+                    .Equals("detName")).ToList();
+                System.Threading.Thread.Sleep(200);
+                var ScraperMagentsOuter = ScraperHtml[0].Descendants("a")            // PARSED MAGNET LINKS
+                    .Where(node => node.GetAttributeValue("href", "")
+                    .Contains("magnet")).ToList();
+                System.Threading.Thread.Sleep(200);
+                var ScraperMibSize = ScraperHtml[0].Descendants("font")            // PARSED MAGNET LINKS
+                    .Where(node => node.GetAttributeValue("class", "")
+                    .Equals("detDesc")).ToList();
+                System.Threading.Thread.Sleep(200);
+
+                if (ScraperNames.Count <= 0)
                 {
-                    if (ScraperName.InnerText.Length == 0 && counter == 0)
+                    namesOfFiles.Clear();
+                    namesOfFiles.Add("No Data Found for Episode: " + episodeNumber );
+                    Console.WriteLine(namesOfFiles[0]);
+                    Console.WriteLine();
+                   
+                    episodeNumber++;
+                }
+                else{
+                    episodeNumber++;
+
+                    foreach (var ScraperName in ScraperNames)
                     {
-                        InvalidSearch();
+                        if (ScraperName.InnerText.Length == 0 && counter == 0)
+                        {
+                            //InvalidSearch();
+                            Console.WriteLine("Invalid Search");
 
+                        }
+
+                        namesOfFiles.Clear();
+                        episodeCounter = ScraperName.InnerText.Length;
+                        counter++;
+                        namesOfFiles.Add(ScraperName.InnerText);
+                        
+                        
                     }
-                    episodeCounter = ScraperName.InnerText.Length;
-                    counter++;
-                    namesOfFiles.Add(ScraperName.InnerText);
+                    System.Threading.Thread.Sleep(200);
+                    Console.WriteLine(namesOfFiles[0]);
+                    Console.WriteLine();
 
+                    foreach (var ScraperMagnet in ScraperMagentsOuter)
+                    {
+                        magenetUrl.Clear();
+                        string magent = ScraperMagnet.OuterHtml;
+                        string[] trimed = magent.Split('"');
+
+                        magenetUrl.Add(trimed[1]);
+                    
+                    }
+                    System.Threading.Thread.Sleep(200);
+                    Console.WriteLine(magenetUrl[0]);
+
+                    //string showName = showNameResponse.Replace(" ", "_");
+                    //string textFilePath = magenetUrlfolder + @"\" + showName + "_Magnets" + ".txt";
+                    //StreamWriter sw = new StreamWriter(textFilePath);
+                    //sw.Write(magenetUrl[0]);
+                    //sw.Close();
+                    Console.WriteLine();
                 }
-
-                Console.WriteLine(namesOfFiles[0]);
-                Console.WriteLine();
-
-                foreach (var ScraperMagnet in ScraperMagentsOuter)
-                {
-                    string magent = ScraperMagnet.OuterHtml;
-                    string[] trimed = magent.Split('"');
-
-                    magenetUrl.Add(trimed[1]);
-
-                }
-                Console.WriteLine(magenetUrl[0]);
-
-                //string showName = showNameResponse.Replace(" ", "_");
-                //string textFilePath = magenetUrlfolder + @"\" + showName + "_Magnets" + ".txt";
-                //StreamWriter sw = new StreamWriter(textFilePath);
-                //sw.Write(magenetUrl[0]);
-                //sw.Close();
-
             }
-            else
-            {
-                InvalidSearch();
-            }
-            Console.WriteLine();
-
-;
+            
         }
     }
 }
