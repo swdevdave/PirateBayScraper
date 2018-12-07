@@ -23,29 +23,36 @@ namespace PirateBayScraper
         static int counter = 0;
         static int episodeCounter = 1;
         static string seasonEpisode;
+        static int noResponseCount = 0;
+        static int noResponseTracker = 0;
+        static int fileCreatedCount = 0;
+        static string filesNotFoundNames = "";
 
         static List<string> namesOfFiles = new List<string>();
         static List<string> magenetUrl = new List<string>();
         static List<string> noFileCount = new List<string>();
+        static List<string> parsedResponses = new List<string>();
+        
+        
 
-        static void Main(string[] args)
+        static void Main(string[] args) 
         {
             checkIfDirExists();
             ConsoleQuiz();
-            
+
             GetHtmlAsync();
             System.Threading.Thread.Sleep(500);
 
-            FinishQuiz();
-            Console.ReadLine();
+            Console.Read();  
         }
 
-       
         private static void FinishQuiz()
         {
-            Console.Clear();
-            string totalCounter = "\nCreated " + counter + " Magnets\n\n";
+            
+            string totalCounter = "\nCreated " + (episodeNumber -2) + " Magnets\n\n";
+
             Console.WriteLine(totalCounter);
+            Console.WriteLine("No Files found count: " + noResponseTracker + "\n\n");
             Console.WriteLine("Press Any Key to Exit...");
             Console.Read();
             Environment.Exit(0);
@@ -58,12 +65,11 @@ namespace PirateBayScraper
             string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             magenetUrlfolder = path + folderName;
     
-            Console.WriteLine(magenetUrlfolder.ToString());
             if (!Directory.Exists(magenetUrlfolder))
             {
                 Directory.CreateDirectory(magenetUrlfolder);
+                Console.WriteLine("Created Folder: " + magenetUrlfolder.ToString());
             }
-           
         }
 
         private static void ConsoleQuiz()
@@ -103,8 +109,6 @@ namespace PirateBayScraper
 
         }
 
-
-
         private static void URLBuilder()
         {
             if (episodeNumber < 10)
@@ -120,10 +124,28 @@ namespace PirateBayScraper
             string baseUrl = "https://thepiratebay.rocks/search/";
             string endUrl = "/1/99/0";
             fullURL = baseUrl + innerUrl + endUrl;
-            Console.WriteLine("\n" + fullURL);
-            
-            
+            //Console.WriteLine("\n" + fullURL);
+
         }
+
+        static void WriteResponses()
+        {
+            string showName = showNameResponse.Replace(" ", "_");
+            string textFilePath = magenetUrlfolder + @"\"
+                + showName
+                + "_Magnets_" + updatedSeasonNumber + ".txt";
+            StreamWriter sw = new StreamWriter(textFilePath);
+            Console.WriteLine("File written to: " + textFilePath);
+            for (int i = 0; i < parsedResponses.Count; i++)
+            {
+                sw.WriteLine(parsedResponses[i]);
+                sw.WriteLine("\n\n");
+            }
+            
+            System.Threading.Thread.Sleep(100);
+            sw.Close();
+        }
+
 
         private static void InvalidSearch()
         {
@@ -138,48 +160,50 @@ namespace PirateBayScraper
 
         private static async void GetHtmlAsync()
         {
-            while (episodeCounter >= 1)
+            while (noResponseCount < 2)
             {
+                Console.Clear();
+                Console.WriteLine("\n Files found:" + fileCreatedCount+ "\n");
+                Console.WriteLine("\n Files not found:" + noResponseTracker + "\n");
 
                 URLBuilder();
-                System.Threading.Thread.Sleep(200);
+                System.Threading.Thread.Sleep(100);
                 var httpClient = new HttpClient();
                 var htmlBody = await httpClient.GetStringAsync(fullURL);
-                System.Threading.Thread.Sleep(200);
+                System.Threading.Thread.Sleep(100);
                 var htmlDocument = new HtmlDocument();
 
                 htmlDocument.LoadHtml(htmlBody);
-                System.Threading.Thread.Sleep(200);
-                var ScraperHtml = htmlDocument.DocumentNode.Descendants("table") // Base HTML DATA
-                     .Where(node => node.GetAttributeValue("id", "")
-                     .Equals("searchResult")).ToList();
-                System.Threading.Thread.Sleep(200);
-                var ScraperNames = ScraperHtml[0].Descendants("div")            // PARSED NAMES
+                System.Threading.Thread.Sleep(100);
+                var ScraperHtml = htmlDocument.DocumentNode.Descendants("table")    // Base HTML DATA
+                        .Where(node => node.GetAttributeValue("id", "")
+                        .Equals("searchResult")).ToList();
+                System.Threading.Thread.Sleep(100);
+                var ScraperNames = ScraperHtml[0].Descendants("div")                // PARSED NAMES
                     .Where(node => node.GetAttributeValue("class", "")
                     .Equals("detName")).ToList();
-                System.Threading.Thread.Sleep(200);
+                System.Threading.Thread.Sleep(100);
                 var ScraperMagentsOuter = ScraperHtml[0].Descendants("a")            // PARSED MAGNET LINKS
                     .Where(node => node.GetAttributeValue("href", "")
                     .Contains("magnet")).ToList();
-                System.Threading.Thread.Sleep(200);
-                var ScraperMibSize = ScraperHtml[0].Descendants("font")            // PARSED MAGNET LINKS
+                System.Threading.Thread.Sleep(100);
+                var ScraperMibSize = ScraperHtml[0].Descendants("font")             // PARSED MAGNET LINKS
                     .Where(node => node.GetAttributeValue("class", "")
                     .Equals("detDesc")).ToList();
-                System.Threading.Thread.Sleep(200);
+                System.Threading.Thread.Sleep(100);
 
                 if (ScraperNames.Count <= 0)
                 {
-                    
-                    //string showName = showNameResponse.Replace(" ", "_");
-                    //string textFilePath = magenetUrlfolder + @"\" + showName + "_Magnets" + ".txt";
-                    //StreamWriter sw = new StreamWriter(textFilePath);               
-                    //sw.Write("No Data Found for Episode: " + episodeNumber);
-                    //sw.Close();
-                    Console.WriteLine("No Data Found for Episode: " + episodeNumber);
-                  
+                    //Console.WriteLine("No Data Found for Episode: " + episodeNumber);
+                    noResponseCount++;
                     episodeNumber++;
+                    noResponseTracker++;
+                    filesNotFoundNames += ("Couldn't find" + episodeNumber + "\n");
                 }
-                else{
+                else
+                {
+                    
+                    noResponseCount = 0;
                     episodeNumber++;
 
                     foreach (var ScraperName in ScraperNames)           // Loop for Name of File
@@ -190,41 +214,41 @@ namespace PirateBayScraper
                             Console.WriteLine("Invalid Search");
 
                         }
-                                                
+
                         episodeCounter = ScraperName.InnerText.Length;
                         counter++;
                         namesOfFiles.Add(ScraperName.InnerText);
 
                     }
+
                     
-                    Console.WriteLine(namesOfFiles[0].Trim() +"\n\n");
-                    Console.WriteLine();
 
                     foreach (var ScraperMagnet in ScraperMagentsOuter)  // Loop for Magent
                     {
-                        
+
                         string magent = ScraperMagnet.OuterHtml;
                         string[] trimed = magent.Split('"');
 
                         magenetUrl.Add(trimed[1]);
-                    
-                    }
-                    
-                    Console.WriteLine(magenetUrl[0]);
-                    
 
-                    //string showName = showNameResponse.Replace(" ", "_");
-                    //string textFilePath = magenetUrlfolder + @"\" + showName + "_Magnets" + ".txt";
-                    //StreamWriter sw = new StreamWriter(textFilePath);
-                    //sw.Write(magenetUrl[0]);
-                    //sw.Write(namesOfFiles[0]);
-                    //sw.Close();
+                    }
+                    //parsedResponses.Add();
+                    
+                    parsedResponses.Add(magenetUrl[0]);
+
+                    fileCreatedCount++;
+
                     magenetUrl.Clear();
                     namesOfFiles.Clear();
 
-                    Console.WriteLine();
                 }
-            }            
+            }
+            Console.WriteLine("Finished pulling Files");
+            System.Threading.Thread.Sleep(1000);
+            Console.Clear();
+            WriteResponses();
+            System.Threading.Thread.Sleep(200);
+            FinishQuiz();
         }
     }
 }
