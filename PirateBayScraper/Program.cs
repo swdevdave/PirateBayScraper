@@ -169,17 +169,20 @@ namespace PirateBayScraper
 
                 if (ScraperNames.Count <= 0)
                 {
-                    namesOfFiles.Clear();
-                    namesOfFiles.Add("No Data Found for Episode: " + episodeNumber );
-                    Console.WriteLine(namesOfFiles[0]);
-                    Console.WriteLine();
-                   
+                    
+                    //string showName = showNameResponse.Replace(" ", "_");
+                    //string textFilePath = magenetUrlfolder + @"\" + showName + "_Magnets" + ".txt";
+                    //StreamWriter sw = new StreamWriter(textFilePath);               
+                    //sw.Write("No Data Found for Episode: " + episodeNumber);
+                    //sw.Close();
+                    Console.WriteLine("No Data Found for Episode: " + episodeNumber);
+                  
                     episodeNumber++;
                 }
                 else{
                     episodeNumber++;
 
-                    foreach (var ScraperName in ScraperNames)
+                    foreach (var ScraperName in ScraperNames)           // Loop for Name of File
                     {
                         if (ScraperName.InnerText.Length == 0 && counter == 0)
                         {
@@ -187,39 +190,41 @@ namespace PirateBayScraper
                             Console.WriteLine("Invalid Search");
 
                         }
-
-                        namesOfFiles.Clear();
+                                                
                         episodeCounter = ScraperName.InnerText.Length;
                         counter++;
                         namesOfFiles.Add(ScraperName.InnerText);
-                        
-                        
+
                     }
-                    System.Threading.Thread.Sleep(200);
-                    Console.WriteLine(namesOfFiles[0]);
+                    
+                    Console.WriteLine(namesOfFiles[0].Trim() +"\n\n");
                     Console.WriteLine();
 
-                    foreach (var ScraperMagnet in ScraperMagentsOuter)
+                    foreach (var ScraperMagnet in ScraperMagentsOuter)  // Loop for Magent
                     {
-                        magenetUrl.Clear();
+                        
                         string magent = ScraperMagnet.OuterHtml;
                         string[] trimed = magent.Split('"');
 
                         magenetUrl.Add(trimed[1]);
                     
                     }
-                    System.Threading.Thread.Sleep(200);
+                    
                     Console.WriteLine(magenetUrl[0]);
+                    
 
                     //string showName = showNameResponse.Replace(" ", "_");
                     //string textFilePath = magenetUrlfolder + @"\" + showName + "_Magnets" + ".txt";
                     //StreamWriter sw = new StreamWriter(textFilePath);
                     //sw.Write(magenetUrl[0]);
+                    //sw.Write(namesOfFiles[0]);
                     //sw.Close();
+                    magenetUrl.Clear();
+                    namesOfFiles.Clear();
+
                     Console.WriteLine();
                 }
-            }
-            
+            }            
         }
     }
 }
