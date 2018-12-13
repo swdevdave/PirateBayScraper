@@ -102,18 +102,18 @@ namespace PirateBayScraper
                 {
                     updatedSeasonNumber = seasonNumberResponse.ToString();
                     updatedSeasonNumber = "0" + updatedSeasonNumber;
-
                 }
-                //Console.Write(updatedSeasonNumber);
-
-                Console.Write("\nHD Versions? Y/N\n");
-                hiDefResponse = Console.ReadLine();
             }
             else
             {
                 Console.Write("Season Number must be numeric digits only");
                 // Add more logic here.
             }
+            
+
+            Console.Write("\nHD Versions? Y/N\n");
+                hiDefResponse = Console.ReadLine();
+            
 
 
 
