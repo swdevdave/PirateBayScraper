@@ -38,7 +38,7 @@ namespace PirateBayScraper
         static List<string> noFileCount = new List<string>();
         static List<string> parsedResponses = new List<string>();
 
-        
+
 
         static void Main(string[] args)
         {
@@ -57,9 +57,9 @@ namespace PirateBayScraper
             string totalCounter = "\nCreated " + fileCreatedCount + " Magnets\n\n";
 
             Console.WriteLine(totalCounter);
-            for (int i = 0; i < filesNotFoundNames.Count -5; i++)               // -5 is used becuse 5 is the end counter for loop
+            for (int i = 0; i < filesNotFoundNames.Count - 5; i++)               // -5 is used becuse 5 is the end counter for loop
             {
-                Console.WriteLine("Unable to find Episode: " + (Int16.Parse(filesNotFoundNames[i])-1) + "\n");
+                Console.WriteLine("Unable to find Episode: " + (Int16.Parse(filesNotFoundNames[i]) - 1) + "\n");
             }
             Console.WriteLine("Press Any Key to Exit...");
             Console.Read();
@@ -97,7 +97,7 @@ namespace PirateBayScraper
             do
             {
                 Console.Write("\nWhat season would you like?\n");
-                seasonNumberResponse = Console.ReadLine();                                  
+                seasonNumberResponse = Console.ReadLine();
                 int result;
                 bool ifSucess = int.TryParse(seasonNumberResponse, out result);         // Begin Validation Logic
                 if (ifSucess)
@@ -114,13 +114,13 @@ namespace PirateBayScraper
                 {
                     Console.WriteLine("\nPlease enter a valid number.\n");
                 }
-                
+
             } while (true);
 
 
             do
             {
-                Console.WriteLine("\nWould you like to search for HD versions?" );
+                Console.WriteLine("\nWould you like to search for HD versions?");
                 Console.Write("Y/N\n");
 
                 hiDefResponse = Console.ReadLine();
@@ -131,14 +131,15 @@ namespace PirateBayScraper
                     Console.WriteLine("Searching for HiDef");
                     break;
 
-                } else if (hiDefResponse.ToLower().Trim() == "n")
+                }
+                else if (hiDefResponse.ToLower().Trim() == "n")
                 {
                     hiDef = false;
                     Console.WriteLine("Searching for most results");
                     break;
                 }
                 Console.WriteLine("Please enter Y or N only");
-                
+
             } while (true);
 
         }
@@ -161,8 +162,8 @@ namespace PirateBayScraper
             string endUrl = "/1/99/0";
             fullHDURL = baseUrl + innerUrl + "%20720p" + endUrl;
             fullURL = baseUrl + innerUrl + endUrl;
-            
-            
+
+
             //Console.WriteLine("\n" + fullURL);
 
         }
@@ -184,11 +185,11 @@ namespace PirateBayScraper
                 + showName
                 + "_magnets_S" + updatedSeasonNumber + ".txt";
             }
-            
+
             StreamWriter sw = new StreamWriter(textFilePath);
             Console.WriteLine("File written to: " + textFilePath);
 
-            for (int i = 0; i < filesNotFoundNames.Count - 4; i++)               // -5 is used becuse 5 is the end counter for loop
+            for (int i = 0; i < filesNotFoundNames.Count - 5; i++)               // -5 is used becuse 5 is the end counter for loop
             {
                 sw.WriteLine("Unable to find Episode: " + (Int16.Parse(filesNotFoundNames[i]) - 1));
                 sw.WriteLine("\n\n");
@@ -205,7 +206,7 @@ namespace PirateBayScraper
 
             sw.Close();
         }
-        
+
         private static void InvalidSearch()
         {
             Console.Clear();
@@ -214,41 +215,26 @@ namespace PirateBayScraper
             Console.Read();
             Environment.Exit(0);
         }
-        
+
         private static async void GetHtmlAsync()
         {
-            while (noResponseCount <= 5)
+            while (noResponseCount < 5)
             {
                 URLBuilder();
                 System.Threading.Thread.Sleep(100);
                 var httpClient = new HttpClient();
-                string htmlBody; 
+                string htmlBody;
 
                 if (hiDef)
                 {
-                    htmlBody = String.Empty;
-
-                    if (noResponseHDCounter < 1)
-                    {
-                        
-                        htmlBody = await httpClient.GetStringAsync(fullURL);
-                    }
-                    else
-                    {
-                        
-                        htmlBody = await httpClient.GetStringAsync(noHDURL);
-                        noHDURL = String.Empty;
-                        noHD = true;
-                        noResponseHDCounter = 0;
-                        episodeNumber--;
-                    }
+                    htmlBody = await httpClient.GetStringAsync(fullHDURL);                 
                 }
                 else
                 {
                     htmlBody = await httpClient.GetStringAsync(fullURL);
                 }
-                
-                
+
+
                 System.Threading.Thread.Sleep(100);
                 var htmlDocument = new HtmlDocument();
                 htmlDocument.LoadHtml(htmlBody);
@@ -274,65 +260,41 @@ namespace PirateBayScraper
                     .Equals("detDesc")).ToList();
                 System.Threading.Thread.Sleep(100);
 
-                if (ScraperNames.Count <= 1)
+                if (ScraperNames.Count >= 1 && ScraperNames != null)
                 {
-                    //Console.WriteLine("No Data Found for Episode: " + episodeNumber);
-                    noResponseCount++;
-                    episodeNumber++;
-                    noResponseTracker++;
-                    if (hiDef && noHD)
-                    {
-                        filesNotFoundNames.Add(episodeNumber.ToString());
-                        noHD = false;
-                    }
-                    noHDURL = fullURL;
-                    noResponseHDCounter++;
-                }
-                else
-                {
-
                     noResponseCount = 0;
                     episodeNumber++;
 
                     foreach (var ScraperName in ScraperNames)           // Loop for Name of File
                     {
-                        if (ScraperName.InnerText.Length == 0 && counter == 0)
-                        {
-                            //InvalidSearch();
-                            Console.WriteLine("Invalid Search");
-
-                        }
-
                         episodeCounter = ScraperName.InnerText.Length;
                         counter++;
                         namesOfFiles.Add(ScraperName.InnerText);
-
                     }
-                    
-                    //firstRunNameCheck();
-                
-                
-                    
 
                     foreach (var ScraperMagnet in ScraperMagentsOuter)  // Loop for Magent
                     {
-
                         string magent = ScraperMagnet.OuterHtml;
                         string[] trimed = magent.Split('"');
-
                         magenetUrl.Add(trimed[1]);
-
                     }
                     parsedResponses.Add(magenetUrl[0]);
 
                     fileCreatedCount = parsedResponses.Count;
                     Console.Clear();
                     Console.WriteLine("\n Files found:" + fileCreatedCount + "\n");
-
-
+                    
                     magenetUrl.Clear();
                     namesOfFiles.Clear();
-
+                }
+                else
+                {
+                    noResponseCount++;
+                    episodeNumber++;
+                    noResponseTracker++;
+                    
+                    filesNotFoundNames.Add(episodeNumber.ToString());
+                    
                 }
 
             }
@@ -362,8 +324,9 @@ namespace PirateBayScraper
                     {
                         firstRun = false;
                         break;
-                        
-                    }else if (nameVerification.ToLower() == "n")
+
+                    }
+                    else if (nameVerification.ToLower() == "n")
                     {
                         ConsoleQuiz();
                         magenetUrl.Clear();
@@ -375,7 +338,7 @@ namespace PirateBayScraper
 
                 } while (true);
             }
-            
+
 
 
         }
